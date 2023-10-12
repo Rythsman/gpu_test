@@ -54,3 +54,6 @@ dist
 .tf_configure.bazelrc
 /**/*.pb.cc
 /**/*.pb.h
+
+cmake-build-debug*/
+cmake-build-release/
