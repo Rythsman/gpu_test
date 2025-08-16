@@ -37,7 +37,7 @@ __global__ void smem_bandwidth_kernel(
         asm volatile (
             "st.shared.v4.b32 [%0], {%1, %2, %3, %4};\n"
             :
-            : "r"(smem_addr + i * (uint32_t)sizeof(int4))
+            : "r"(smem_addr + i * (uint32_t)sizeof(int4)),
               "r"(reg.x), "r"(reg.y), "r"(reg.z), "r"(reg.w)
             : "memory"
         );
