@@ -14,7 +14,7 @@ void l1_latency_kernel(void **ptr, void **ret, uint32_t *clk) {
     // warm up to populate l1 cache
     for (int i = 0; i < ROUND; ++i) {
         asm volatile (
-            "ld.global.nc.b64 %0, [%0];\n"
+            "ld.global.ca.b64 %0, [%0];\n"
             : "+l"(ldg_ptr) : : "memory"
         );
     }
@@ -34,7 +34,7 @@ void l1_latency_kernel(void **ptr, void **ret, uint32_t *clk) {
          * LDG latency can not be hidden by parallel LDG.
          */
         asm volatile (
-            "ld.global.nc.b64 %0, [%0];\n"
+            "ld.global.ca.b64 %0, [%0];\n"
             : "+l"(ldg_ptr) : : "memory"
         );
     }

@@ -20,7 +20,9 @@ bool check(const float *A,
                 sum += A[i * k + p] * B[j + p * n];
             }
 
-            if (std::fabs(sum - C[i * n + j]) / std::fabs(sum) > 1e-5f) {
+            float diff = std::fabs(sum - C[i * n + j]);
+            float denom = std::max(1e-6f, std::fabs(sum));
+            if (diff / denom > 1e-5f) {
                 printf("C[%d][%d] not match, %f vs %f\n", i, j, sum, C[i * n + j]);
                 return false;
             }
@@ -338,7 +340,9 @@ void ampere_sgemm_128x256x8_kernel(
     }
 
     // 1'st A&B tile loaded before the k_tile loop
-    uint32_t k_tiles = (k + 7) / 8 - 1;
+    int k_tiles_i = int((k + 7) / 8) - 1;
+    if (k_tiles_i < 0) k_tiles_i = 0;
+    uint32_t k_tiles = (uint32_t)k_tiles_i;
 
     // load 1'st tile to shared memory
     {
