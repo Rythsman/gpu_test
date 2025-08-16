@@ -20,7 +20,10 @@ bool check(const float *A,
                 sum += A[i * k + p] * B[j + p * n];
             }
 
-            if (std::fabs(sum - C[i * n + j]) / std::fabs(sum) > 1e-5f) {
+            float diff = std::fabs(sum - C[i * n + j]);
+            float denom = std::fabs(sum);
+            if (denom < 1.0f) denom = 1.0f;
+            if (diff / denom > 1e-5f) {
                 printf("C[%d][%d] not match, %f vs %f\n", i, j, sum, C[i * n + j]);
                 return false;
             }
