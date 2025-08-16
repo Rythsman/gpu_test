@@ -5,6 +5,15 @@
     int err = (Expr); \
     if (err != 0) { \
         printf("cuBLAS error %d at line %d\n", err, __LINE__); \
+        exit(1); \
+    } \
+}
+
+#define CHECK_CUDA(Expr) { \
+    cudaError_t err = (Expr); \
+    if (err != cudaSuccess) { \
+        printf("CUDA error %s at line %d\n", cudaGetErrorString(err), __LINE__); \
+        exit(1); \
     } \
 }
 
@@ -51,39 +60,47 @@ int main() {
     int iter = 10;
 
     void *A, *B, *C;
-    cudaMalloc(&A, m * k * sizeof(float));
-    cudaMalloc(&B, k * n * sizeof(float));
-    cudaMalloc(&C, m * n * sizeof(float));
+    // Fix: Add proper error checking for CUDA memory allocations
+    CHECK_CUDA(cudaMalloc(&A, m * k * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&B, k * n * sizeof(float)));
+    CHECK_CUDA(cudaMalloc(&C, m * n * sizeof(float)));
 
     cublasHandle_t handle;
-    cublasCreate(&handle);
+    // Fix: Add error checking for cuBLAS handle creation
+    CHECK_CUBLAS(cublasCreate(&handle));
 
     cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
+    CHECK_CUDA(cudaEventCreate(&start));
+    CHECK_CUDA(cudaEventCreate(&stop));
 
     // warmup
     gemm(handle, m, n, k, &alpha, &beta, input_type, A, B,
          output_type, C, compute_type, algo);
 
-    cudaEventRecord(start);
+    CHECK_CUDA(cudaEventRecord(start));
     for (int i = 0; i < iter; ++i) {
         gemm(handle, m, n, k, &alpha, &beta, input_type, A, B,
              output_type, C, compute_type, algo);
     }
-    cudaEventRecord(stop);
+    CHECK_CUDA(cudaEventRecord(stop));
 
     float time_ms = 0.f;
-    cudaEventSynchronize(stop);
-    cudaEventElapsedTime(&time_ms, start, stop);
+    CHECK_CUDA(cudaEventSynchronize(stop));
+    CHECK_CUDA(cudaEventElapsedTime(&time_ms, start, stop));
 
     long ops = (long)m * n * k * 2;
     double gops = ((double)ops / 1e9) / ((double)time_ms / iter / 1e3);
     printf("%f Gops\n", gops);
 
-    cudaFree(A);
-    cudaFree(B);
-    cudaFree(C);
+    // Fix: Proper cleanup of resources
+    CHECK_CUDA(cudaEventDestroy(start));
+    CHECK_CUDA(cudaEventDestroy(stop));
+    CHECK_CUBLAS(cublasDestroy(handle));
+    CHECK_CUDA(cudaFree(A));
+    CHECK_CUDA(cudaFree(B));
+    CHECK_CUDA(cudaFree(C));
+    
+    return 0;
 }
 
 
