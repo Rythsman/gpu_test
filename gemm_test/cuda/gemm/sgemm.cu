@@ -21,7 +21,17 @@ bool check(const float *A,
                 sum += A[i * k + p] * B[j + p * n];
             }
 
-            if (std::fabs(sum - C[i * n + j]) / std::fabs(sum) > 1e-5f) {
+            // Fix: Handle division by zero when sum is zero
+            float error;
+            if (std::fabs(sum) < 1e-8f) {
+                // For very small sum values, use absolute error
+                error = std::fabs(sum - C[i * n + j]);
+            } else {
+                // For normal values, use relative error
+                error = std::fabs(sum - C[i * n + j]) / std::fabs(sum);
+            }
+            
+            if (error > 1e-5f) {
                 printf("C[%d][%d] not match, %f vs %f\n", i, j, sum, C[i * n + j]);
                 return false;
             }
